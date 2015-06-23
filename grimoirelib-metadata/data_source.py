@@ -32,7 +32,7 @@ class DataSource(object):
 
         raise NotImplementedError
 
-    def add_filter(self, filter_):
+    def add_filter(self, filter_, values=None):
         """ Add a new filter to the already created metadata.
 
         This type of filters should be used as 'global' ones that will
@@ -40,6 +40,7 @@ class DataSource(object):
         of filter is to remove 'merges' from a list of analysis.
 
         :param filter_: contains the type of filter to be applied
+        :param values: contains the values to be applied to such filter_
         """
 
         raise NotImplementedError
