@@ -56,6 +56,7 @@ class SCM(DataSource):
         self.new_columns[SCM.DATA_DOMAINS] = self._add_column_domains
         self.new_columns[SCM.DATA_BRANCHES] = self._add_column_branches
         self.new_columns[SCM.DATA_LINES] = self._add_column_lines
+        self.new_columns[SCM.DATA_BOTS] = self._add_column_bots
 
         # Initializing the dictionary with filters to be applied
         # and their methods
@@ -127,6 +128,31 @@ class SCM(DataSource):
 
     def _add_column_lines(self):
         pass
+
+    def _add_column_bots(self):
+        """ This private method adds a new column with info checking if
+            a commit was done by a bot.
+
+        A value of 1 means that this commit was done by a bot. Otherwise, a
+        0 would be found.
+
+        Information is found in the 'profiles' table, created by SortingHat.
+        """
+
+        query = """ ALTER TABLE %s
+                    ADD is_bot TINYINT(1)
+                    DEFAULT 0
+                """ % (SCM.METATABLE_NAME)
+        self.cursor.execute(query)
+
+        query = """ UPDATE %s sm,
+                           people_uidentities pui,
+                           %s.profiles pro
+                    SET sm.is_bot = pro.is_bot
+                    WHERE sm.author = pui.people_id AND
+                          pui.uuid = pro.uuid
+                """ % (SCM.METATABLE_NAME, self.identities_db)
+        self.cursor.execute(query)
 
     def add_annotation(self, metric):
         """ An new annotation adds a new column with the specified 'metric'
