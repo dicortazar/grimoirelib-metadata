@@ -19,10 +19,36 @@
 #   Daniel Izquierdo Cortazar <dizquierdo@bitergia.com>
 #
 
+import MySQLdb
 
 class DataSource(object):
     """ Abstract class used to build a Metrics Grimoire metadata database
     """
+
+    def _db_connection(self, user, password, database,
+                       host="127.0.0.1", port=3306, group=None):
+        """ Database connection
+
+        This method starts a connection with the provided database
+
+        :param user: user name to access the database
+        :param password: password used to access the database
+        :param database: name of the database
+        :param host: host where the database is located, by default: localhost
+        :param port: port where the MySQL server is located
+        :para group: group of the db connection
+        """
+
+        if group is None:
+            db = MySQLdb.connect(user=user, passwd=password,
+                                 db=database, host=host, port=port)
+        else:
+            db = MySQLdb.connect(read_default_group=group, db=database)
+
+        cursor = db.cursor()
+        cursor.execute("SET NAMES 'utf8'")
+
+        return db, db.cursor()
 
     def add_annotation(self, metric):
         """ An new annotation adds a new column with the specified 'metric'
@@ -41,6 +67,14 @@ class DataSource(object):
 
         :param filter_: contains the type of filter to be applied
         :param values: contains the values to be applied to such filter_
+        """
+
+        raise NotImplementedError
+
+    def _init_metatable(self):
+        """ Create the basic metatable with initial information
+
+        This table contains initial information from the core tables.
         """
 
         raise NotImplementedError

@@ -23,6 +23,8 @@ from optparse import OptionParser
 
 from ConfigParser import SafeConfigParser
 
+from grimoirelib_metadata.scm import SCM
+
 def read_options():
     """ Function to manage user options
     """
@@ -62,9 +64,36 @@ def read_config_file(config_file_path):
 
     return config
 
+def add_annotations(options):
+    """ Iterates through the several sections of the several data sources
+
+    For each of the metrics defined in the config file, this function calls
+    to DataSource.add_annotation method with the specific metric
+
+    :param options: config file options
+    """
+
+    for section in options.keys():
+        # First, instantiate the data source:
+        if section == "scm_metadata": data_source = SCM(options)
+        elif section == "its_metadata": data_source = ITS()
+        else: raise ValueError
+
+        # Second, addition of all of the annotations found for such data source
+        for metrics in options[section][metrics]:
+            data_source.add_annotation(metric)
+
+
+def filter_data(options):
+    pass
+
 if __name__ == '__main__':
 
     user_opts = read_options()
     config_file_path = user_opts.config_file
     config_data = read_config_file(config_file_path)
+
+    add_annotations(config_data)
+
+    filter_data(config_data)
 
