@@ -127,7 +127,24 @@ class SCM(DataSource):
         pass
 
     def _add_column_lines(self):
-        pass
+        """ This private method adds two new columns: added_lines and removed_lines
+
+        Information is found in the 'commits_lines' table, created by CVSAnalY
+        """
+
+        query = """ ALTER TABLE %s
+                    ADD added_lines INTEGER(11) DEFAULT 0,
+                    ADD removed_lines INTEGER(11) DEFAULT 0
+                """ % (SCM.METATABLE_NAME)
+        self.cursor.execute(query)
+
+        query = """ UPDATE %s sm,
+                           commits_lines cl
+                    SET sm.added_lines = cl.added,
+                        sm.removed_lines = cl.removed
+                    WHERE cl.commit_id = sm.commit
+                """ % (SCM.METATABLE_NAME)
+        self.cursor.execute(query)
 
     def _add_column_bots(self):
         """ This private method adds a new column with info checking if
