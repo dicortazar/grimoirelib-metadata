@@ -34,6 +34,7 @@ class SCM(DataSource):
     DATA_DOMAINS = "domains"
     DATA_BRANCHES = "branches"
     DATA_LINES = "lines"
+    DATA_BOTS = "bots"
 
     # Constants used to filter information from the metatable
     FILTER_MERGES = "merges"
@@ -76,6 +77,14 @@ class SCM(DataSource):
         print "Init database correct"
 
     def _add_column_organizations(self):
+        """ This private method adds a new column with organizations info.
+
+        This takes into account the initial and final date of enrollment of a
+        developer in a company.
+
+        Information is found in the 'enrollments' table, created by SortingHat.
+        """
+
         query = """ ALTER TABLE %s
                     ADD organizations INTEGER(11)
                 """ % (SCM.METATABLE_NAME)
@@ -92,7 +101,23 @@ class SCM(DataSource):
         self.cursor.execute(query)
 
     def _add_column_countries(self):
-        pass
+        """ This private method adds a new column with countries info.
+
+        Information is found in the 'profiles' table, created by SortingHat.
+        """
+
+        query = """ ALTER TABLE %s
+                    ADD countries VARCHAR(2)
+                """ % (SCM.METATABLE_NAME)
+        self.cursor.execute(query)
+        query = """UPDATE %s sm,
+                          people_uidentities pui,
+                          %s.profiles pro
+                   SET sm.countries = pro.country_code
+                   WHERE sm.author = pui.people_id AND
+                         pui.uuid = pro.uuid
+                """ % (SCM.METATABLE_NAME, self.identities_db)
+        self.cursor.execute(query)
 
     def _add_column_domains(self):
         pass
