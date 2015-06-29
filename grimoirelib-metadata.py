@@ -75,12 +75,14 @@ def add_annotations(options):
 
     for section in options.keys():
         # First, instantiate the data source:
+        if section == "databases" or section == "databases_access": pass
         if section == "scm_metadata": data_source = SCM(options)
         elif section == "its_metadata": data_source = ITS()
         else: raise ValueError
 
         # Second, addition of all of the annotations found for such data source
-        for metrics in options[section][metrics]:
+        metrics = options[section]["metrics"].split(",")
+        for metric in metrics:
             data_source.add_annotation(metric)
 
 

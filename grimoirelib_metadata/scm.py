@@ -78,17 +78,17 @@ class SCM(DataSource):
     def _add_column_organizations(self):
         query = """ ALTER TABLE %s
                     ADD organizations INTEGER(11)
-                """ % (SCM.METATABLENAME)
+                """ % (SCM.METATABLE_NAME)
         self.cursor.execute(query)
 
         query = """UPDATE %s sm,
                           people_uidentities pui,
                           %s.enrollments enr
                    SET sm.organizations = enr.organization_id
-                   WHERE sm.author_id = pui.people_id AND
+                   WHERE sm.author = pui.people_id AND
                          pui.uuid = enr.uuid AND
                          sm.date >= enr.start and sm.date < enr.end
-                """ % (SCM.METATABLE_NAME, self.sortinghat_db)
+                """ % (SCM.METATABLE_NAME, self.identities_db)
         self.cursor.execute(query)
 
     def _add_column_countries(self):
@@ -108,7 +108,6 @@ class SCM(DataSource):
 
         :param metric: contains the name of the new column to be added
         """
-
         self.new_columns[metric]()
 
     def _add_filter_merges(self, values):
@@ -144,6 +143,9 @@ class SCM(DataSource):
                                    repository_id as repository
                             FROM scmlog
                 """ % (SCM.METATABLE_NAME)
+        cursor.execute(query)
+
+        query = "ALTER TABLE %s ENGINE = MYISAM" % (SCM.METATABLE_NAME)
         cursor.execute(query)
 
         return db, cursor
