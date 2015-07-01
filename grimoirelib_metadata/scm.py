@@ -21,12 +21,14 @@
 
 from grimoirelib_metadata.data_source import DataSource
 
+from grimoirelib_settings.settings import Settings
+
 class SCM(DataSource):
     """ Class that adds and filters data in a CVSAnalY-type database
     """
 
     # Meta table name
-    METATABLE_NAME = "scm_metadata"
+    METATABLE_NAME = Settings.SCM_METATABLE_NAME
 
     # Constants used to specify new columns to add to the metatable
     DATA_ORGANIZATIONS = "organizations"

@@ -76,7 +76,7 @@ def add_annotations(options):
     for section in options.keys():
         # First, instantiate the data source:
         if section == "databases" or section == "databases_access": pass
-        if section == "scm_metadata": data_source = SCM(options)
+        elif section == "scm_metadata": data_source = SCM(options)
         elif section == "its_metadata": data_source = ITS()
         else: raise ValueError
 
