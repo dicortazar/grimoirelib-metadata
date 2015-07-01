@@ -24,7 +24,7 @@
 
 from distutils.core import setup
 
-setup(name = "grimoirelib",
+setup(name = "grimoirelib_metadata",
       version = "0.1",
       author =  "Daniel Izquierdo",
       author_email = "dizquierdo@bitergia.com",
