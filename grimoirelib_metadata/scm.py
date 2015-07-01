@@ -35,6 +35,7 @@ class SCM(DataSource):
     DATA_BRANCHES = "branches"
     DATA_LINES = "lines"
     DATA_BOTS = "bots"
+    DATA_MERGES = "merges"
 
     # Constants used to filter information from the metatable
     FILTER_MERGES = "merges"
@@ -57,6 +58,7 @@ class SCM(DataSource):
         self.new_columns[SCM.DATA_BRANCHES] = self._add_column_branches
         self.new_columns[SCM.DATA_LINES] = self._add_column_lines
         self.new_columns[SCM.DATA_BOTS] = self._add_column_bots
+        self.new_columns[SCM.DATA_MERGES] = self._add_column_merges
 
         # Initializing the dictionary with filters to be applied
         # and their methods
@@ -143,6 +145,29 @@ class SCM(DataSource):
                     SET sm.added_lines = cl.added,
                         sm.removed_lines = cl.removed
                     WHERE cl.commit_id = sm.commit
+                """ % (SCM.METATABLE_NAME)
+        self.cursor.execute(query)
+
+    def _add_column_merges(self):
+        """ This private method adds a new column with info checking if
+            a commit is a merge or not.
+
+        A commit is defined as a merge when this does not appear in the
+        'actions' table defined by CVSAnalY.
+
+        A value of 1 means that this commit is detected as merge.
+        """
+
+        query = """ ALTER TABLE %s
+                    ADD is_merge TINYINT(1)
+                    DEFAULT 1
+                """ % (SCM.METATABLE_NAME)
+        self.cursor.execute(query)
+
+        query = """ UPDATE %s sm
+                    SET sm.is_merge = 0
+                    WHERE sm.commit IN
+                            (SELECT distinct(commit_id) from actions)
                 """ % (SCM.METATABLE_NAME)
         self.cursor.execute(query)
 
