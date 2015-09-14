@@ -24,6 +24,8 @@ from optparse import OptionParser
 from ConfigParser import SafeConfigParser
 
 from grimoirelib_metadata.scm import SCM
+from grimoirelib_metadata.scr import SCR
+
 
 def read_options():
     """ Function to manage user options
@@ -77,6 +79,7 @@ def add_annotations(options):
         # First, instantiate the data source:
         if section == "databases" or section == "databases_access": pass
         elif section == "scm_metadata": data_source = SCM(options)
+        elif section == "scr_metadata": data_source = SCR(options)
         elif section == "its_metadata": data_source = ITS()
         else: raise ValueError
 
