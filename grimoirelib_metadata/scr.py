@@ -39,7 +39,6 @@ class SCR(DataSource):
     DATA_TIME2CLOSE = "time2close"       # Time to close per changeset
                                          # If this is merged, then this is time2merge
                                          # If this is abandoned, then this is time2abandon
-    DATA_ITERATIONS = "iterations"       # Number of iterations per changeset
     DATA_TIME_WAIT4REVIEWER = "timewaitingreviewer" # Total time waiting for reviewer action
     DATA_TIME_WAIT4SUBMITTER = "timewaitingsubmitter" # Total time waiting for submitter
 
@@ -66,7 +65,6 @@ class SCR(DataSource):
         self.new_columns[SCR.DATA_DOMAINS] = self._add_column_domains
         self.new_columns[SCR.DATA_BRANCHES] = self._add_column_branches
         self.new_columns[SCR.DATA_TIME2CLOSE] = self._add_column_time2close
-        self.new_columns[SCR.DATA_ITERATIONS] = self._add_column_iterations
         self.new_columns[SCR.DATA_TIME_WAIT4REVIEWER] = self._add_column_time4reviewer
         self.new_columns[SCR.DATA_TIME_WAIT4SUBMITTER] = self._add_column_time4submitter
 
@@ -143,28 +141,6 @@ class SCR(DataSource):
     def _add_column_branches(self):
         pass
 
-    def _add_column_iterations(self):
-        """ This private method adds a new column with iterations info.
-
-        Information is found in the 'changes' table, created by Bicho-Gerrit.
-        """
-        print "Adding column iterations"
-        query = """ ALTER TABLE %s
-                    ADD iterations INTEGER(11)
-                """ % (SCR.METATABLE_NAME)
-        self.cursor.execute(query)
-        query = """ UPDATE %s sm,
-                           (SELECT i.issue as gerrit_issue,
-                                   count(distinct(ch.id)) as iterations
-                            FROM changes ch, issues i
-                            WHERE ch.new_value='UPLOADED' AND
-                                  ch.issue_id = i.id
-                            GROUP by i.issue) t
-                    SET sm.iterations = t.iterations
-                    WHERE sm.gerrit_issue = t.gerrit_issue
-                """ % (SCR.METATABLE_NAME)
-        self.cursor.execute(query)
-
     def _add_column_time2close(self):
         pass
 
@@ -216,21 +192,32 @@ class SCR(DataSource):
     def _init_metatable(self):
 
         db, cursor = self._db_connection(self.user_db, self.password_db, self.scr_db)
+
+        subquery_iterations = """ (SELECT ch.issue_id as issue_id,
+                                         count(distinct(old_value)) as iterations
+                                  FROM changes ch
+                                  WHERE old_value <> ''
+                                  GROUP BY ch.issue_id) it
+                              """
+
         query = """ CREATE TABLE %s as
                             SELECT i.issue as gerrit_issue,
                                    i.status as current_status,
                                    i.submitted_by as patchset_author,
                                    ch.changed_on changeset_opened_on,
                                    i.tracker_id as gerrit_project,
-                                   count(distinct(c.id)) as comments
+                                   count(distinct(c.id)) as comments,
+                                   it.iterations
                             FROM issues i,
                                  comments c,
-                                 changes ch
+                                 changes ch,
+                                 %s
                             WHERE i.id = c.issue_id AND
                                   i.id = ch.issue_id AND
-                                  ch.new_value = 'NEW'
+                                  ch.new_value = 'NEW' AND
+                                  i.id = it.issue_id
                             GROUP BY i.issue
-                """ % (SCR.METATABLE_NAME)
+                """ % (SCR.METATABLE_NAME, subquery_iterations)
         cursor.execute(query)
 
         query = "ALTER TABLE %s ENGINE = MyISAM" % (SCR.METATABLE_NAME)
